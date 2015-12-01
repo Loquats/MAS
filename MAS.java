@@ -32,8 +32,9 @@ public class MAS {
 		}
 
 		for (int i = 0; i < numNodes; i++) {
-			System.out.println(indexToVertex[i]);
+			System.out.print(indexToVertex[i] + " ");
 		}
+		System.out.println();
 
 		int forwardSize = computeForwardSize(g, indexToVertex, vertexToIndex);
 		int backwardSize = computeBackwardSize(g, indexToVertex, vertexToIndex);
