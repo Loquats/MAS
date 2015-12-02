@@ -32,7 +32,11 @@ public class Graph {
 	public int size() {
 		return size;
 	}
-	
+
+	public Set<Integer> getChildren(int node) {
+		return adjacent[node];
+	}
+
 	public void printMatrix() {
 		for (int i = 0; i < size; i++) {
 		    for (int j = 0; j < size; j++) {

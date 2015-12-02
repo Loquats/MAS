@@ -47,11 +47,11 @@ public class MAS {
 	public static int computeForwardSize(Graph g, int[] indexToVertex, int[] vertexToIndex) {
 		int size = 0;
 		for (int i = 0; i < g.size(); i++) {
-		    for (int j = 0; j < g.size(); j++) {
-		    	if (g.hasEdge(i, j) && vertexToIndex[i] < vertexToIndex[j]) {
+			for (Integer j: g.getChildren(i)) {
+				if (vertexToIndex[i] < vertexToIndex[j]) {
 		    		size++;
 		    	}
-		    }
+			}
 		}
 		return size;
 	}
@@ -59,11 +59,11 @@ public class MAS {
 	public static int computeBackwardSize(Graph g, int[] indexToVertex, int[] vertexToIndex) {
 		int size = 0;
 		for (int i = 0; i < g.size(); i++) {
-		    for (int j = 0; j < g.size(); j++) {
-		    	if (g.hasEdge(i, j) && vertexToIndex[i] > vertexToIndex[j]) {
+			for (Integer j: g.getChildren(i)) {
+				if (vertexToIndex[i] > vertexToIndex[j]) {
 		    		size++;
 		    	}
-		    }
+			}
 		}
 		return size;
 	}
