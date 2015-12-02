@@ -2,7 +2,7 @@ import java.io.*;
 import java.util.StringTokenizer;
 
 public class MAS { 
-	public static void main(String[] args) throws IOException{
+	public static void main(String[] args) throws IOException {
 		String inputFileName = args[0];
 		BufferedReader f = new BufferedReader(new FileReader(inputFileName));
 		int numNodes = Integer.parseInt(f.readLine());
@@ -14,14 +14,18 @@ public class MAS {
 		    for (int j = 0; j < numNodes; j++) {
 		    	int e = Integer.parseInt(line.nextToken());
 		    	if (e == 1) {
-		    		g.edge(i, j);
+		    		// Optimization: Remove two-way edges between nodes
+		    		if (g.hasEdge(j, i)) {
+		    			g.removeEdge(j, i);
+		    		} else {
+		    			g.addEdge(i, j);
+		    		}
 		    	}
 		    }
 		}
 
 		g.printMatrix();
 		g.printAdjacency();
-
 
 		Randp r = new Randp(numNodes);
 		int[] indexToVertex = new int[numNodes];

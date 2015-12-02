@@ -19,10 +19,18 @@ public class Graph {
 	}
 
 	/**
-	* Create and edge from i to j
+	* Create edge from i to j
 	*/
-	public void edge(int i, int j) {
+	public void addEdge(int i, int j) {
 		adjacent[i].add(j);
+	}
+
+	/**
+	* Remove edge from i to j
+	* DOES NOT REMOVE j to i
+	*/
+	public void removeEdge(int i, int j) {
+		adjacent[i].remove(j);
 	}
 
 	public boolean hasEdge(int i, int j) {
