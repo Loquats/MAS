@@ -19,7 +19,9 @@ public class MAS {
 		    }
 		}
 
-		// g.printGraph();
+		g.printMatrix();
+		g.printAdjacency();
+
 
 		Randp r = new Randp(numNodes);
 		int[] indexToVertex = new int[numNodes];
