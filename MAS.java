@@ -7,6 +7,7 @@ public class MAS {
 		BufferedReader f = new BufferedReader(new FileReader(inputFileName));
 		int numNodes = Integer.parseInt(f.readLine());
 		Graph g = new Graph(numNodes);
+		Graph original = new Graph(numNodes);
 
 		StringTokenizer line;
 		for (int i = 0; i < numNodes; i++) {
@@ -14,6 +15,8 @@ public class MAS {
 		    for (int j = 0; j < numNodes; j++) {
 		    	int e = Integer.parseInt(line.nextToken());
 		    	if (e == 1) {
+		    		original.addEdge(i, j);
+
 		    		// Optimization: Remove two-way edges between nodes
 		    		if (g.hasEdge(j, i)) {
 		    			g.removeEdge(j, i);
@@ -56,6 +59,12 @@ public class MAS {
 			}
 			sources = newSources;
 		}
+		System.out.print("Sources: ");
+		for (int i = 0; i < sourcePtr; i++) {
+			System.out.print(optimalOrder[i] + " ");
+		}
+		System.out.println();
+
 		// Sinks
 		ArrayList<Integer> sinks = new ArrayList<Integer>();
 
@@ -80,6 +89,11 @@ public class MAS {
 			}
 			sinks = newSinks;
 		}
+		System.out.print("Sinks: ");
+		for (int i = sinkPtr + 1; i < optimalOrder.length; i++) {
+			System.out.print(optimalOrder[i] + " ");
+		}
+		System.out.println();
 
 		// Preprocess
 		// write getDisjoint(G) which returns List<Graph>
@@ -89,28 +103,29 @@ public class MAS {
 		// 	// Process independently
 		// }
 
-		Randp r = new Randp(numNodes);
-		int[] indexToVertex = new int[numNodes];
-		int[] vertexToIndex = new int[numNodes];
-		int v;
-		for (int i = 0; i < numNodes; i++) {
-			v = r.nextInt();
-			indexToVertex[i] = v;
-			vertexToIndex[v] = i;
+		if (g.numVertices() < 11) {
+			// brute force: try all orders of vertices
+			// return early
 		}
 
-		for (int i = 0; i < numNodes; i++) {
-			System.out.print(indexToVertex[i] + " ");
-		}
-		System.out.println();
+		int[] bestOrder = doLottaTimes(g, 100);
 
-		int forwardSize = computeForwardSize(g, indexToVertex, vertexToIndex);
-		int backwardSize = g.numEdges() - forwardSize;
-		System.out.println(forwardSize + " " + backwardSize);
+		for (int i = sourcePtr, j = 0; j < bestOrder.length; i++, j++) {
+			optimalOrder[i] = bestOrder[j];
+		}
+
+		int[] vertexToIndex = new int[original.numVertices()];
+		for (int i = 0; i < original.numVertices(); i++) {
+			vertexToIndex[optimalOrder[i]] = i;
+		}
+		printArray(optimalOrder);
+
+		System.out.println(computeForwardSize(original, vertexToIndex));
+		System.out.println(original.numEdges());
 	}
 
 	// TODO: optimize this
-	public static int computeForwardSize(Graph g, int[] indexToVertex, int[] vertexToIndex) {
+	public static int computeForwardSize(Graph g, int[] vertexToIndex) {
 		int size = 0;
 		for (int i = 0; i < g.numVertices(); i++) {
 			for (Integer j: g.getChildren(i)) {
@@ -120,6 +135,125 @@ public class MAS {
 			}
 		}
 		return size;
+	}
+
+	public static int[] doLottaTimes(Graph g, int iterations) {
+		int bestOrderSize = -1;
+		int[] bestOrder = null;
+		for (int it = 0; it < iterations; it++) {
+			Randp r = new Randp(g.numVertices());
+			int[] indexToVertex = new int[g.numVertices()];
+			int[] vertexToIndex = new int[g.numVertices()];
+			int v;
+			// Generate random ordering
+			for (int j = 0; j < g.numVertices(); j++) {
+				v = r.nextInt();
+				indexToVertex[j] = v;
+				vertexToIndex[v] = j;
+			}
+			// for (int i = 0; i < g.numVertices(); i++) {
+			// 	System.out.print(indexToVertex[i] + " ");
+			// }
+			// System.out.println();
+			int[] localBest = indexToVertex;
+			int forwardSize = computeForwardSize(g, vertexToIndex);
+			int backwardSize = g.numEdges() - forwardSize;
+			if (backwardSize > forwardSize) {
+				// Reverse list localBest
+				for (int j = 0; j < localBest.length / 2; j++) {
+				    int temp = localBest[j];
+				    localBest[j] = localBest[localBest.length - j - 1];
+				    localBest[localBest.length - j - 1] = temp;
+				}
+			}
+
+			// do optimizations here
+			boolean canImprove = true;
+			while (canImprove) {
+				canImprove = false;
+				for (int i = 0; i < g.numVertices(); i++) {
+					int maxIncrease = 0;
+					int insertIndex = i;
+					int currentIncrease = 0;
+					for (int j = i - 1; j >= 0; j--) {
+						if (g.hasEdge(localBest[i], localBest[j])) {
+							currentIncrease++;
+						}
+						if (g.hasEdge(localBest[j], localBest[i])) {
+							currentIncrease--;
+						}
+						if (currentIncrease > maxIncrease) {
+							maxIncrease = currentIncrease;
+							insertIndex = j;
+						}
+					}
+
+					currentIncrease = 0;
+					for (int j = i + 1; j < g.numVertices(); j++) {
+						if (g.hasEdge(localBest[i], localBest[j])) {
+							currentIncrease--;
+						}
+						if (g.hasEdge(localBest[j], localBest[i])) {
+							currentIncrease++;
+						}
+						if (currentIncrease > maxIncrease) {
+							maxIncrease = currentIncrease;
+							insertIndex = j;
+						}
+					}
+					// Insert if good
+					if (maxIncrease <= 0) {
+						continue;
+					}
+					// Insert
+					int temp = localBest[i];
+					if (insertIndex < i) {
+						for (int k = i - 1; k >= insertIndex; k--) {
+							localBest[k+1] = localBest[k];
+						}
+						localBest[insertIndex] = temp;
+					} else {
+						for (int k = i + 1; k <= insertIndex; k++) {
+							localBest[k-1] = localBest[k];
+						}
+						localBest[insertIndex] = temp;
+					}
+					canImprove = true;
+				}
+			}
+
+			// We've improved it as much as we can. 
+			// Check if we should update bestOrder
+			for (int i = 0; i < g.numVertices(); i++) {
+				vertexToIndex[localBest[i]] = i;
+			}
+			forwardSize = computeForwardSize(g, vertexToIndex);
+			backwardSize = g.numEdges() - forwardSize;
+
+			if (backwardSize > forwardSize) {
+				System.out.println("You really fucked up.");
+				return null;
+			}
+
+			if (forwardSize > bestOrderSize) {
+				bestOrder = localBest;
+				bestOrderSize = forwardSize;
+			}
+		}
+		// for (int i = 0; i < g.numVertices(); i++) {
+		// 	System.out.print(bestOrder[i] + " ");
+		// }
+		// System.out.println();
+		// System.out.println(bestOrderSize);
+		return bestOrder;
+	}
+
+	public static void printArray(int[] arr) {
+		String s = "";
+		for (int i = 0; i < arr.length; i++) {
+			s += arr[i] + " ";
+		}
+		System.out.println(s);
 	}
 
 	public static List<Graph> getDisjoint(Graph g) {
