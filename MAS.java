@@ -27,16 +27,67 @@ public class MAS {
 		g.printMatrix();
 		g.printAdjacency();
 
-		// Pop off sources and sinks to try to linearize
+		int[] optimalOrder = new int[numNodes];
+		int sourcePtr = 0;
+		int sinkPtr = numNodes - 1;
 
+		// Pop off sources and sinks to try to linearize
+		// Sources
+		ArrayList<Integer> sources = new ArrayList<Integer>();
+
+		for (int v: g.getVertices()) {
+			if (g.indegree(v) == 0) {
+				sources.add(v);
+			}
+		}
+
+		ArrayList<Integer> newSources;
+		while (sources.size() != 0) {
+			newSources = new ArrayList<Integer>();
+			for (int v: sources) {
+				for (int child: g.getChildren(v)) {
+					if (g.indegree(child) == 1) {
+						newSources.add(child);
+					}
+				}
+				g.removeVertex(v);
+				optimalOrder[sourcePtr] = v;
+				sourcePtr++;
+			}
+			sources = newSources;
+		}
+		// Sinks
+		ArrayList<Integer> sinks = new ArrayList<Integer>();
+
+		for (int v: g.getVertices()) {
+			if (g.outdegree(v) == 0) {
+				sinks.add(v);
+			}
+		}
+
+		ArrayList<Integer> newSinks;
+		while (sinks.size() != 0) {
+			newSinks = new ArrayList<Integer>();
+			for (int v: sinks) {
+				for (int parent: g.getParents(v)) {
+					if (g.outdegree(parent) == 1) {
+						newSinks.add(parent);
+					}
+				}
+				g.removeVertex(v);
+				optimalOrder[sinkPtr] = v;
+				sinkPtr--;
+			}
+			sinks = newSinks;
+		}
 
 		// Preprocess
 		// write getDisjoint(G) which returns List<Graph>
 		List<Graph> disjointGraphs = getDisjoint(g);
 
-		for (Graph subgraph: disjointGraphs) {
-			// Process independently
-		}
+		// for (Graph subgraph: disjointGraphs) {
+		// 	// Process independently
+		// }
 
 		Randp r = new Randp(numNodes);
 		int[] indexToVertex = new int[numNodes];
