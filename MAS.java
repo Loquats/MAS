@@ -1,5 +1,5 @@
 import java.io.*;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class MAS { 
 	public static void main(String[] args) throws IOException {
@@ -27,6 +27,17 @@ public class MAS {
 		g.printMatrix();
 		g.printAdjacency();
 
+		// Pop off sources and sinks to try to linearize
+
+
+		// Preprocess
+		// write getDisjoint(G) which returns List<Graph>
+		List<Graph> disjointGraphs = getDisjoint(g);
+
+		for (Graph subgraph: disjointGraphs) {
+			// Process independently
+		}
+
 		Randp r = new Randp(numNodes);
 		int[] indexToVertex = new int[numNodes];
 		int[] vertexToIndex = new int[numNodes];
@@ -43,14 +54,14 @@ public class MAS {
 		System.out.println();
 
 		int forwardSize = computeForwardSize(g, indexToVertex, vertexToIndex);
-		int backwardSize = computeBackwardSize(g, indexToVertex, vertexToIndex);
+		int backwardSize = g.numEdges() - forwardSize;
 		System.out.println(forwardSize + " " + backwardSize);
 	}
 
 	// TODO: optimize this
 	public static int computeForwardSize(Graph g, int[] indexToVertex, int[] vertexToIndex) {
 		int size = 0;
-		for (int i = 0; i < g.size(); i++) {
+		for (int i = 0; i < g.numVertices(); i++) {
 			for (Integer j: g.getChildren(i)) {
 				if (vertexToIndex[i] < vertexToIndex[j]) {
 		    		size++;
@@ -60,15 +71,7 @@ public class MAS {
 		return size;
 	}
 
-	public static int computeBackwardSize(Graph g, int[] indexToVertex, int[] vertexToIndex) {
-		int size = 0;
-		for (int i = 0; i < g.size(); i++) {
-			for (Integer j: g.getChildren(i)) {
-				if (vertexToIndex[i] > vertexToIndex[j]) {
-		    		size++;
-		    	}
-			}
-		}
-		return size;
+	public static List<Graph> getDisjoint(Graph g) {
+		return null;
 	}
 }
