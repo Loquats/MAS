@@ -7,10 +7,13 @@ public class MAS {
  
 	    @Override
 	    public int compare(Integer v1, Integer v2) {
-	        if(comp.outdegree(v2) - comp.indegree(v2) <= comp.outdegree(v1) - comp.indegree(v1)){
+	    	int compared = comp.outdegree(v2) - comp.indegree(v2) - (comp.outdegree(v1) - comp.indegree(v1));
+	        if(compared < 0){
 	            return 1;
-	        } else {
+	        } else if (compared>0){
 	            return -1;
+	        } else {
+	        	return 0;
 	        }
 	    }
 	}
@@ -120,7 +123,7 @@ public class MAS {
 
 		// Preprocess
 		// write getDisjoint(G) which returns List<Graph>
-		List<Graph> disjointGraphs = getDisjoint(g);
+		// List<Graph> disjointGraphs = getDisjoint(g);
 
 		// for (Graph subgraph: disjointGraphs) {
 		// 	// Process independently
@@ -412,9 +415,9 @@ public class MAS {
 			start[i] = i;
 		}
 		int[] maxList = start.clone();
-		int score = computeForwardSize(g, start);
+		int score = computeForwardSize(g,reverseMap(start));
 		while (start != null)  {
-			score = computeForwardSize(g, start);
+			score = computeForwardSize(g,reverseMap(start));
 			if (score > max) {
 				max = score;
 				maxList = start.clone();
