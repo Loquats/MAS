@@ -85,6 +85,31 @@ public class Graph {
 		return children.get(vertex).size();
 	}
 
+	public Graph clone() {
+		Graph clone = new Graph(size);
+		clone.numEdges = this.numEdges;
+		clone.children = new HashMap<Integer, Set<Integer>>();
+		clone.parents = new HashMap<Integer, Set<Integer>>();
+
+		// Could try clone(), but let's be safe
+		for (Integer k: this.children.keySet()) {
+			HashSet<Integer> c = new HashSet<Integer>();
+			for (Integer v: this.children.get(k)) {
+				c.add(v);
+			}
+			clone.children.put(k, c);
+		}
+
+		for (Integer k: this.parents.keySet()) {
+			HashSet<Integer> p = new HashSet<Integer>();
+			for (Integer v: this.parents.get(k)) {
+				p.add(v);
+			}
+			clone.parents.put(k, p);
+		}
+		return clone;
+	}
+
 	public void printMatrix() {
 		for (int i = 0; i < size; i++) {
 		    for (int j = 0; j < size; j++) {
