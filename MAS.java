@@ -118,7 +118,7 @@ public class MAS {
 
 		// Preprocess
 		// write getDisjoint(G) which returns List<Graph>
-		List<Graph> disjointGraphs = getDisjoint(g);
+		// List<Graph> disjointGraphs = getDisjoint(g);
 
 		// for (Graph subgraph: disjointGraphs) {
 		// 	// Process independently
