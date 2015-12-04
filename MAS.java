@@ -295,6 +295,65 @@ public class MAS {
 	}
 
 	public static List<Graph> getDisjoint(Graph g) {
-		return null;
+		LinkedList<HashSet<Integer>> setsOfDG = new LinkedList<HashSet<Integer>>();
+		for (Integer vertex: g.getVertices()) {
+			Set<Integer> endEdges = g.getChildren(vertex);
+			boolean exit = false;
+			
+			// Check for source vertex in disjoint sets
+			for (HashSet<Integer> disjointSet: setsOfDG) {
+				if (disjointSet.contains(vertex)) {
+					disjointSet.addAll(endEdges);
+					exit = true;
+				}
+			}
+			if (exit) continue;
+
+			// Check for child vertex in disjoint setes
+			for (Integer child: endEdges) {
+				for (HashSet<Integer> disjointSet: setsOfDG) {
+					if (disjointSet.contains(child)) {
+						disjointSet.addAll(endEdges);
+						disjointSet.add(vertex);
+						exit = true;
+						break;
+					}
+				}
+				if (exit) break;
+			}
+			if (exit) continue;
+			
+			// Create new disjoint set
+			HashSet<Integer> set = new HashSet<Integer>();
+			set.add(vertex);
+			set.addAll(endEdges);
+			setsOfDG.add(set);
+		}
+
+		// for (HashSet<Integer> set: setsOfDG) {
+		// 	System.out.println(set);
+		// }
+
+		// Create Graph List
+
+		LinkedList<Graph> disjointGraphs = new LinkedList<Graph>();
+		for (HashSet<Integer> set: setsOfDG) {
+			Graph graph = new Graph(0);
+			for (Integer vertex: set) {
+				graph.addVertex(vertex);
+			}
+			for (Integer vertex: set) {
+				for (Integer child: g.getChildren(vertex)) {
+					graph.addEdge(vertex, child);
+				}
+			}
+			disjointGraphs.add(graph);
+		}
+
+		// for (Graph graph : disjointGraphs) {
+		// 	graph.printAdjacency();
+		// }
+
+		return disjointGraphs;
 	}
 }
