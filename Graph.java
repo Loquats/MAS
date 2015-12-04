@@ -22,6 +22,12 @@ public class Graph {
 		return children.keySet();
 	}
 
+	public void addVertex(int vertex) {
+		children.put(vertex, new HashSet<Integer>());
+		parents.put(vertex, new HashSet<Integer>());
+		size++;
+	}
+
 	public void removeVertex(int vertex) {
 		for (int parent: parents.get(vertex)) {
 			children.get(parent).remove(vertex);
@@ -110,6 +116,8 @@ public class Graph {
 		return clone;
 	}
 
+	// This will runtime ERROR if the graph has been modified!
+	// Not gonna fix it. boo.
 	public void printMatrix() {
 		for (int i = 0; i < size; i++) {
 		    for (int j = 0; j < size; j++) {
@@ -123,7 +131,7 @@ public class Graph {
 	}
 
 	public void printAdjacency() {
-		for (int i = 0; i < size; i++) {
+		for (Integer i: getVertices()) {
 			System.out.print("" + i + ": ");
 		    for (Integer j: children.get(i)) {
 		    	System.out.print(j + " ");
