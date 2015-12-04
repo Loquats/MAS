@@ -257,10 +257,7 @@ public class MAS {
 
 			// We've improved it as much as we can. 
 			// Check if we should update bestOrder
-			for (int i = 0; i < g.numVertices(); i++) {
-				vertexToIndex[localBest[i]] = i;
-			}
-			forwardSize = computeForwardSize(g, vertexToIndex);
+			forwardSize = computeForwardSize(g, reverseMap(localBest));
 			backwardSize = g.numEdges() - forwardSize;
 
 			if (backwardSize > forwardSize) {
@@ -279,6 +276,14 @@ public class MAS {
 		// System.out.println();
 		// System.out.println(bestOrderSize);
 		return bestOrder;
+	}
+
+	public static int[] reverseMap(int[] arr) {
+		int[] reverseMapped = new int[arr.length];
+		for (int i = 0; i < arr.length; i++) {
+			reverseMapped[arr[i]] = i;
+		}
+		return reverseMapped;
 	}
 
 	public static void printArray(int[] arr) {
