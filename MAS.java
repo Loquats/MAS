@@ -2,6 +2,20 @@ import java.io.*;
 import java.util.*;
 
 public class MAS { 
+	static Graph comp;
+	static class vertexComp implements Comparator<Integer>{
+ 
+	    @Override
+	    public int compare(Integer v1, Integer v2) {
+	        if(comp.outdegree(v2) - comp.indegree(v2) <= comp.outdegree(v1) - comp.indegree(v1)){
+	            return 1;
+	        } else {
+	            return -1;
+	        }
+	    }
+	}
+
+
 	public static void main(String[] args) throws IOException {
 		String inputFileName = args[0];
 		BufferedReader f = new BufferedReader(new FileReader(inputFileName));
@@ -26,6 +40,7 @@ public class MAS {
 		    	}
 		    }
 		}
+		comp = g;
 
 		g.printMatrix();
 		g.printAdjacency();
@@ -109,6 +124,24 @@ public class MAS {
 		}
 
 		int[] bestOrder = doLottaTimes(g, 100);
+
+
+		// trying to sort by outdegree - indegree
+		int[] sortOptimized = new int[g.numVertices()];
+
+		Set<Integer> vert = g.getVertices();
+		List<Integer> intermediary = new ArrayList<Integer>();
+		
+		for (int i : vert) {
+			intermediary.add(i);
+		}
+		Collections.sort(intermediary, new vertexComp());
+
+		int index = 0;
+		for (int i : intermediary) {
+			sortOptimized[index++] = i;
+		}
+		// end sorting trial
 
 		for (int i = sourcePtr, j = 0; j < bestOrder.length; i++, j++) {
 			optimalOrder[i] = bestOrder[j];
