@@ -44,7 +44,9 @@ public class MAS {
 
 		g.printMatrix();
 		g.printAdjacency();
-
+		System.out.println("Original: " + original.numEdges());
+		System.out.println("Double-edge pruned: " + g.numEdges());
+		int doublePrunedEdges = g.numEdges();
 
 
 		int[] optimalOrder = new int[numNodes];
@@ -111,6 +113,8 @@ public class MAS {
 			System.out.print(optimalOrder[i] + " ");
 		}
 		System.out.println();
+
+		// g.printAdjacency();
 
 		// Preprocess
 		// write getDisjoint(G) which returns List<Graph>
@@ -196,22 +200,19 @@ public class MAS {
 			optimalOrder[i] = bestOrderRand[j];
 		}
 
-		int[] vertexToIndex = new int[original.numVertices()];
-		for (int i = 0; i < original.numVertices(); i++) {
-			vertexToIndex[optimalOrder[i]] = i;
-		}
 		printArray(optimalOrder);
 
-		System.out.println(computeForwardSize(original, vertexToIndex));
-		System.out.println(original.numEdges());
+		int graphWeight = computeForwardSize(original, reverseMap(optimalOrder));
+		System.out.println("Raw: " + graphWeight);
+		System.out.println("Double-edge adjusted: " + (graphWeight - (original.numEdges() - doublePrunedEdges)/2));
 	}
 
 	// TODO: optimize this
-	public static int computeForwardSize(Graph g, int[] vertexToIndex) {
+	public static int computeForwardSize(Graph g, HashMap<Integer, Integer> vertexToIndex) {
 		int size = 0;
-		for (int i = 0; i < g.numVertices(); i++) {
+		for (int i: g.getVertices()) {
 			for (Integer j: g.getChildren(i)) {
-				if (vertexToIndex[i] < vertexToIndex[j]) {
+				if (vertexToIndex.get(i) < vertexToIndex.get(j)) {
 		    		size++;
 		    	}
 			}
@@ -368,20 +369,19 @@ public class MAS {
 			List<Integer> rand = new ArrayList<Integer>(g.getVertices());
 			Collections.shuffle(rand);
 			int[] indexToVertex = new int[g.numVertices()];
-			int[] vertexToIndex = new int[g.numVertices()];
 			int v;
 			// Generate random ordering
 			for (int j = 0; j < g.numVertices(); j++) {
 				v = rand.get(j);
 				indexToVertex[j] = v;
-				vertexToIndex[v] = j;
 			}
 			// for (int i = 0; i < g.numVertices(); i++) {
 			// 	System.out.print(indexToVertex[i] + " ");
 			// }
 			// System.out.println();
 			int[] localBest = indexToVertex;
-			int forwardSize = computeForwardSize(g, vertexToIndex);
+			// System.out.println(it);
+			int forwardSize = computeForwardSize(g, reverseMap(indexToVertex));
 			int backwardSize = g.numEdges() - forwardSize;
 			if (backwardSize > forwardSize) {
 				// Reverse list localBest
@@ -392,60 +392,6 @@ public class MAS {
 				}
 			}
 
-			// do optimizations here
-			// boolean canImprove = true;
-			// while (canImprove) {
-			// 	canImprove = false;
-			// 	for (int i = 0; i < g.numVertices(); i++) {
-			// 		int maxIncrease = 0;
-			// 		int insertIndex = i;
-			// 		int currentIncrease = 0;
-			// 		for (int j = i - 1; j >= 0; j--) {
-			// 			if (g.hasEdge(localBest[i], localBest[j])) {
-			// 				currentIncrease++;
-			// 			}
-			// 			if (g.hasEdge(localBest[j], localBest[i])) {
-			// 				currentIncrease--;
-			// 			}
-			// 			if (currentIncrease > maxIncrease) {
-			// 				maxIncrease = currentIncrease;
-			// 				insertIndex = j;
-			// 			}
-			// 		}
-
-			// 		currentIncrease = 0;
-			// 		for (int j = i + 1; j < g.numVertices(); j++) {
-			// 			if (g.hasEdge(localBest[i], localBest[j])) {
-			// 				currentIncrease--;
-			// 			}
-			// 			if (g.hasEdge(localBest[j], localBest[i])) {
-			// 				currentIncrease++;
-			// 			}
-			// 			if (currentIncrease > maxIncrease) {
-			// 				maxIncrease = currentIncrease;
-			// 				insertIndex = j;
-			// 			}
-			// 		}
-			// 		// Insert if good
-			// 		if (maxIncrease <= 0) {
-			// 			continue;
-			// 		}
-			// 		// Insert
-			// 		int temp = localBest[i];
-			// 		if (insertIndex < i) {
-			// 			for (int k = i - 1; k >= insertIndex; k--) {
-			// 				localBest[k+1] = localBest[k];
-			// 			}
-			// 			localBest[insertIndex] = temp;
-			// 		} else {
-			// 			for (int k = i + 1; k <= insertIndex; k++) {
-			// 				localBest[k-1] = localBest[k];
-			// 			}
-			// 			localBest[insertIndex] = temp;
-			// 		}
-			// 		canImprove = true;
-			// 	}
-			// }
 			while (optimizedByInsertion(g, localBest)) {
 
 			}
@@ -477,10 +423,10 @@ public class MAS {
 		return bestOrder;
 	}
 
-	public static int[] reverseMap(int[] arr) {
-		int[] reverseMapped = new int[arr.length];
+	public static HashMap<Integer, Integer> reverseMap(int[] arr) {
+		HashMap<Integer, Integer> reverseMapped = new HashMap<Integer, Integer>();
 		for (int i = 0; i < arr.length; i++) {
-			reverseMapped[arr[i]] = i;
+			reverseMapped.put(arr[i], i);
 		}
 		return reverseMapped;
 	}

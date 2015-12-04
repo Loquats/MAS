@@ -110,6 +110,8 @@ public class Graph {
 		return clone;
 	}
 
+	// This will runtime ERROR if the graph has been modified!
+	// Not gonna fix it. boo.
 	public void printMatrix() {
 		for (int i = 0; i < size; i++) {
 		    for (int j = 0; j < size; j++) {
@@ -123,7 +125,7 @@ public class Graph {
 	}
 
 	public void printAdjacency() {
-		for (int i = 0; i < size; i++) {
+		for (int i: children.keySet()) {
 			System.out.print("" + i + ": ");
 		    for (Integer j: children.get(i)) {
 		    	System.out.print(j + " ");
