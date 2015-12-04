@@ -45,6 +45,8 @@ public class MAS {
 		g.printMatrix();
 		g.printAdjacency();
 
+
+
 		int[] optimalOrder = new int[numNodes];
 		int sourcePtr = 0;
 		int sinkPtr = numNodes - 1;
@@ -123,7 +125,34 @@ public class MAS {
 			// return early
 		}
 
-		int[] bestOrder = doLottaTimes(g, 100);
+		int[] bestOrderRand = doLottaTimes(g, 100);
+
+		//sorting by outdegree - indegree, removing each time
+		Graph duplicate = g.clone();
+		int[] sortByDegree = new int[g.numVertices()];
+		for (int i = 0; i < g.numVertices(); i++) {
+			int maxDegree = -1;
+			int maxVert = -1;
+			for (int v : duplicate.getVertices()) {
+				int myDegree = duplicate.outdegree(v) - duplicate.indegree(v);
+				if (myDegree > maxDegree) {
+					maxDegree = myDegree;
+					maxVert = v;
+				}
+			}
+			sortByDegree[i] = maxVert;
+			duplicate.removeVertex(maxVert);
+		}
+
+		while (optimizedByInsertion(g, sortByDegree)) {
+
+		}
+
+		while(optimizeBySwapTrue(g, sortByDegree)) {
+
+		}
+
+		//
 
 
 		// trying to sort by outdegree - indegree
@@ -141,10 +170,30 @@ public class MAS {
 		for (int i : intermediary) {
 			sortOptimized[index++] = i;
 		}
-		// end sorting trial
 
-		for (int i = sourcePtr, j = 0; j < bestOrder.length; i++, j++) {
-			optimalOrder[i] = bestOrder[j];
+		while (optimizedByInsertion(g, sortOptimized)) {
+
+		}
+
+		while(optimizeBySwapTrue(g, sortOptimized)) {
+
+		}
+		// end sorting trial
+		int[] bestOrder = bestOrderRand;
+
+		int sortOptVal = computeForwardSize(g, reverseMap(sortOptimized));
+		int sortByDegVal = computeForwardSize(g, reverseMap(sortByDegree));
+		int bestOrderVal = computeForwardSize(g, reverseMap(bestOrderRand));
+
+		if (sortOptVal > sortByDegVal && sortOptVal > bestOrderVal) {
+			bestOrder = sortOptimized;
+		} else if (sortByDegVal > sortOptVal && sortByDegVal > bestOrderVal) {
+			bestOrder = sortByDegree;
+		}
+
+
+		for (int i = sourcePtr, j = 0; j < bestOrderRand.length; i++, j++) {
+			optimalOrder[i] = bestOrderRand[j];
 		}
 
 		int[] vertexToIndex = new int[original.numVertices()];
@@ -168,6 +217,148 @@ public class MAS {
 			}
 		}
 		return size;
+	}
+
+
+	// returns optimal swapped ordering
+	// public static int[] greedyOptimizeBySwap(Graph g, int[] original) {
+	// 	int originalSize = computeForwardSize(g, reverseMap(g, original));
+	// 	int modSize, temp;
+
+	// 	int[] modified = original.clone();
+	// 	int[] best = original.clone();
+
+	// 	for (int i = 0; i < original.length - 1; i++) {
+	// 		for (int j = i+1; j<original.length; j++) {
+	// 			// swap
+	// 			temp = modified[i];
+	// 			modified[i] = modified[j];
+	// 			modified[j] = temp;
+
+	// 			// check
+	// 			modSize = computeForwardSize(g, reverseMap(modified));
+	// 			if (modSize > originalSize) {
+	// 				temp = best[i];
+	// 				best[i] = best[j];
+	// 				best[j] = temp;
+	// 			} else {
+	// 				// swap back
+	// 				temp = modified[i];
+	// 				modified[i] = modified[j];
+	// 				modified[j] = temp;
+	// 			}				
+	// 		}
+	// 	}
+	// 	return best;
+	// }
+
+	public static boolean optimizeBySwapTrue(Graph g, int[] original) {
+		int originalSize, modSize, temp;
+		boolean optimized = false;
+		originalSize = computeForwardSize(g, reverseMap(original));
+		int[] best = original.clone();
+		for (int i = 0; i < original.length - 1; i++) {
+			for (int j = i+1; j<original.length; j++) {
+				// swap
+				temp = original[i];
+				original[i] = original[j];
+				original[j] = temp;
+				modSize = computeForwardSize(g, reverseMap(original));
+
+				if (modSize > originalSize) {
+					best = original.clone();
+					optimized = true;
+				}
+				
+				// always swap best
+				temp = original[i];
+				original[i] = original[j];
+				original[j] = temp;
+			}
+		}
+		original = best;
+		return optimized;
+	}
+
+	public static boolean optimizeBySwapGreedy(Graph g, int[] original) {
+		int originalSize, modSize, temp;
+		originalSize = computeForwardSize(g, reverseMap(original));
+		boolean optimized = false;
+		for (int i = 0; i < original.length - 1; i++) {
+			for (int j = i+1; j<original.length; j++) {
+				// swap
+				temp = original[i];
+				original[i] = original[j];
+				original[j] = temp;
+				modSize = computeForwardSize(g, reverseMap(original));
+
+				if (modSize < originalSize) {
+					// swap back
+					temp = original[i];
+					original[i] = original[j];
+					original[j] = temp;
+				} else {
+					originalSize = computeForwardSize(g, reverseMap(original));
+					optimized = true;
+				}
+			}
+		}
+		return optimized;
+	}
+
+
+	public static boolean optimizedByInsertion(Graph g, int[] localBest) {
+		boolean canImprove = false;
+		for (int i = 0; i < g.numVertices(); i++) {
+			int maxIncrease = 0;
+			int insertIndex = i;
+			int currentIncrease = 0;
+			for (int j = i - 1; j >= 0; j--) {
+				if (g.hasEdge(localBest[i], localBest[j])) {
+					currentIncrease++;
+				}
+				if (g.hasEdge(localBest[j], localBest[i])) {
+					currentIncrease--;
+				}
+				if (currentIncrease > maxIncrease) {
+					maxIncrease = currentIncrease;
+					insertIndex = j;
+				}
+			}
+
+			currentIncrease = 0;
+			for (int j = i + 1; j < g.numVertices(); j++) {
+				if (g.hasEdge(localBest[i], localBest[j])) {
+					currentIncrease--;
+				}
+				if (g.hasEdge(localBest[j], localBest[i])) {
+					currentIncrease++;
+				}
+				if (currentIncrease > maxIncrease) {
+					maxIncrease = currentIncrease;
+					insertIndex = j;
+				}
+			}
+			// Insert if good
+			if (maxIncrease <= 0) {
+				continue;
+			}
+			// Insert
+			int temp = localBest[i];
+			if (insertIndex < i) {
+				for (int k = i - 1; k >= insertIndex; k--) {
+					localBest[k+1] = localBest[k];
+				}
+				localBest[insertIndex] = temp;
+			} else {
+				for (int k = i + 1; k <= insertIndex; k++) {
+					localBest[k-1] = localBest[k];
+				}
+				localBest[insertIndex] = temp;
+			}
+			canImprove = true;
+		}
+		return canImprove;
 	}
 
 	public static int[] doLottaTimes(Graph g, int iterations) {
@@ -201,58 +392,65 @@ public class MAS {
 			}
 
 			// do optimizations here
-			boolean canImprove = true;
-			while (canImprove) {
-				canImprove = false;
-				for (int i = 0; i < g.numVertices(); i++) {
-					int maxIncrease = 0;
-					int insertIndex = i;
-					int currentIncrease = 0;
-					for (int j = i - 1; j >= 0; j--) {
-						if (g.hasEdge(localBest[i], localBest[j])) {
-							currentIncrease++;
-						}
-						if (g.hasEdge(localBest[j], localBest[i])) {
-							currentIncrease--;
-						}
-						if (currentIncrease > maxIncrease) {
-							maxIncrease = currentIncrease;
-							insertIndex = j;
-						}
-					}
+			// boolean canImprove = true;
+			// while (canImprove) {
+			// 	canImprove = false;
+			// 	for (int i = 0; i < g.numVertices(); i++) {
+			// 		int maxIncrease = 0;
+			// 		int insertIndex = i;
+			// 		int currentIncrease = 0;
+			// 		for (int j = i - 1; j >= 0; j--) {
+			// 			if (g.hasEdge(localBest[i], localBest[j])) {
+			// 				currentIncrease++;
+			// 			}
+			// 			if (g.hasEdge(localBest[j], localBest[i])) {
+			// 				currentIncrease--;
+			// 			}
+			// 			if (currentIncrease > maxIncrease) {
+			// 				maxIncrease = currentIncrease;
+			// 				insertIndex = j;
+			// 			}
+			// 		}
 
-					currentIncrease = 0;
-					for (int j = i + 1; j < g.numVertices(); j++) {
-						if (g.hasEdge(localBest[i], localBest[j])) {
-							currentIncrease--;
-						}
-						if (g.hasEdge(localBest[j], localBest[i])) {
-							currentIncrease++;
-						}
-						if (currentIncrease > maxIncrease) {
-							maxIncrease = currentIncrease;
-							insertIndex = j;
-						}
-					}
-					// Insert if good
-					if (maxIncrease <= 0) {
-						continue;
-					}
-					// Insert
-					int temp = localBest[i];
-					if (insertIndex < i) {
-						for (int k = i - 1; k >= insertIndex; k--) {
-							localBest[k+1] = localBest[k];
-						}
-						localBest[insertIndex] = temp;
-					} else {
-						for (int k = i + 1; k <= insertIndex; k++) {
-							localBest[k-1] = localBest[k];
-						}
-						localBest[insertIndex] = temp;
-					}
-					canImprove = true;
-				}
+			// 		currentIncrease = 0;
+			// 		for (int j = i + 1; j < g.numVertices(); j++) {
+			// 			if (g.hasEdge(localBest[i], localBest[j])) {
+			// 				currentIncrease--;
+			// 			}
+			// 			if (g.hasEdge(localBest[j], localBest[i])) {
+			// 				currentIncrease++;
+			// 			}
+			// 			if (currentIncrease > maxIncrease) {
+			// 				maxIncrease = currentIncrease;
+			// 				insertIndex = j;
+			// 			}
+			// 		}
+			// 		// Insert if good
+			// 		if (maxIncrease <= 0) {
+			// 			continue;
+			// 		}
+			// 		// Insert
+			// 		int temp = localBest[i];
+			// 		if (insertIndex < i) {
+			// 			for (int k = i - 1; k >= insertIndex; k--) {
+			// 				localBest[k+1] = localBest[k];
+			// 			}
+			// 			localBest[insertIndex] = temp;
+			// 		} else {
+			// 			for (int k = i + 1; k <= insertIndex; k++) {
+			// 				localBest[k-1] = localBest[k];
+			// 			}
+			// 			localBest[insertIndex] = temp;
+			// 		}
+			// 		canImprove = true;
+			// 	}
+			// }
+			while (optimizedByInsertion(g, localBest)) {
+
+			}
+
+			while(optimizeBySwapTrue(g, localBest)) {
+
 			}
 
 			// We've improved it as much as we can. 
