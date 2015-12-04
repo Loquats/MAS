@@ -365,7 +365,7 @@ public class MAS {
 		int bestOrderSize = -1;
 		int[] bestOrder = null;
 		for (int it = 0; it < iterations; it++) {
-			List<Integer> rand = g.vertList();
+			List<Integer> rand = new ArrayList<Integer>(g.getVertices());
 			Collections.shuffle(rand);
 			int[] indexToVertex = new int[g.numVertices()];
 			int[] vertexToIndex = new int[g.numVertices()];
