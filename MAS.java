@@ -44,6 +44,10 @@ public class MAS {
 
 		g.printMatrix();
 		g.printAdjacency();
+		System.out.println("Original: " + original.numEdges());
+		System.out.println("Double-edge pruned: " + g.numEdges());
+		int doublePrunedEdges = g.numEdges();
+
 
 		int[] optimalOrder = new int[numNodes];
 		int sourcePtr = 0;
@@ -110,6 +114,8 @@ public class MAS {
 		}
 		System.out.println();
 
+		// g.printAdjacency();
+
 		// Preprocess
 		// write getDisjoint(G) which returns List<Graph>
 		List<Graph> disjointGraphs = getDisjoint(g);
@@ -123,7 +129,34 @@ public class MAS {
 			// return early
 		}
 
-		int[] bestOrder = doLottaTimes(g, 100);
+		int[] bestOrderRand = doLottaTimes(g, 100);
+
+		//sorting by outdegree - indegree, removing each time
+		Graph duplicate = g.clone();
+		int[] sortByDegree = new int[g.numVertices()];
+		for (int i = 0; i < g.numVertices(); i++) {
+			int maxDegree = -1;
+			int maxVert = -1;
+			for (int v : duplicate.getVertices()) {
+				int myDegree = duplicate.outdegree(v) - duplicate.indegree(v);
+				if (myDegree > maxDegree) {
+					maxDegree = myDegree;
+					maxVert = v;
+				}
+			}
+			sortByDegree[i] = maxVert;
+			duplicate.removeVertex(maxVert);
+		}
+
+		while (optimizedByInsertion(g, sortByDegree)) {
+
+		}
+
+		while(optimizeBySwapTrue(g, sortByDegree)) {
+
+		}
+
+		//
 
 
 		// trying to sort by outdegree - indegree
@@ -141,28 +174,45 @@ public class MAS {
 		for (int i : intermediary) {
 			sortOptimized[index++] = i;
 		}
+
+		while (optimizedByInsertion(g, sortOptimized)) {
+
+		}
+
+		while(optimizeBySwapTrue(g, sortOptimized)) {
+
+		}
 		// end sorting trial
+		int[] bestOrder = bestOrderRand;
 
-		for (int i = sourcePtr, j = 0; j < bestOrder.length; i++, j++) {
-			optimalOrder[i] = bestOrder[j];
+		int sortOptVal = computeForwardSize(g, reverseMap(sortOptimized));
+		int sortByDegVal = computeForwardSize(g, reverseMap(sortByDegree));
+		int bestOrderVal = computeForwardSize(g, reverseMap(bestOrderRand));
+
+		if (sortOptVal > sortByDegVal && sortOptVal > bestOrderVal) {
+			bestOrder = sortOptimized;
+		} else if (sortByDegVal > sortOptVal && sortByDegVal > bestOrderVal) {
+			bestOrder = sortByDegree;
 		}
 
-		int[] vertexToIndex = new int[original.numVertices()];
-		for (int i = 0; i < original.numVertices(); i++) {
-			vertexToIndex[optimalOrder[i]] = i;
+
+		for (int i = sourcePtr, j = 0; j < bestOrderRand.length; i++, j++) {
+			optimalOrder[i] = bestOrderRand[j];
 		}
+
 		printArray(optimalOrder);
 
-		System.out.println(computeForwardSize(original, vertexToIndex));
-		System.out.println(original.numEdges());
+		int graphWeight = computeForwardSize(original, reverseMap(optimalOrder));
+		System.out.println("Raw: " + graphWeight);
+		System.out.println("Double-edge adjusted: " + (graphWeight - (original.numEdges() - doublePrunedEdges)/2));
 	}
 
 	// TODO: optimize this
-	public static int computeForwardSize(Graph g, int[] vertexToIndex) {
+	public static int computeForwardSize(Graph g, HashMap<Integer, Integer> vertexToIndex) {
 		int size = 0;
-		for (int i = 0; i < g.numVertices(); i++) {
+		for (int i: g.getVertices()) {
 			for (Integer j: g.getChildren(i)) {
-				if (vertexToIndex[i] < vertexToIndex[j]) {
+				if (vertexToIndex.get(i) < vertexToIndex.get(j)) {
 		    		size++;
 		    	}
 			}
@@ -170,26 +220,168 @@ public class MAS {
 		return size;
 	}
 
+
+	// returns optimal swapped ordering
+	// public static int[] greedyOptimizeBySwap(Graph g, int[] original) {
+	// 	int originalSize = computeForwardSize(g, reverseMap(g, original));
+	// 	int modSize, temp;
+
+	// 	int[] modified = original.clone();
+	// 	int[] best = original.clone();
+
+	// 	for (int i = 0; i < original.length - 1; i++) {
+	// 		for (int j = i+1; j<original.length; j++) {
+	// 			// swap
+	// 			temp = modified[i];
+	// 			modified[i] = modified[j];
+	// 			modified[j] = temp;
+
+	// 			// check
+	// 			modSize = computeForwardSize(g, reverseMap(modified));
+	// 			if (modSize > originalSize) {
+	// 				temp = best[i];
+	// 				best[i] = best[j];
+	// 				best[j] = temp;
+	// 			} else {
+	// 				// swap back
+	// 				temp = modified[i];
+	// 				modified[i] = modified[j];
+	// 				modified[j] = temp;
+	// 			}				
+	// 		}
+	// 	}
+	// 	return best;
+	// }
+
+	public static boolean optimizeBySwapTrue(Graph g, int[] original) {
+		int originalSize, modSize, temp;
+		boolean optimized = false;
+		originalSize = computeForwardSize(g, reverseMap(original));
+		int[] best = original.clone();
+		for (int i = 0; i < original.length - 1; i++) {
+			for (int j = i+1; j<original.length; j++) {
+				// swap
+				temp = original[i];
+				original[i] = original[j];
+				original[j] = temp;
+				modSize = computeForwardSize(g, reverseMap(original));
+
+				if (modSize > originalSize) {
+					best = original.clone();
+					optimized = true;
+				}
+				
+				// always swap best
+				temp = original[i];
+				original[i] = original[j];
+				original[j] = temp;
+			}
+		}
+		original = best;
+		return optimized;
+	}
+
+	public static boolean optimizeBySwapGreedy(Graph g, int[] original) {
+		int originalSize, modSize, temp;
+		originalSize = computeForwardSize(g, reverseMap(original));
+		boolean optimized = false;
+		for (int i = 0; i < original.length - 1; i++) {
+			for (int j = i+1; j<original.length; j++) {
+				// swap
+				temp = original[i];
+				original[i] = original[j];
+				original[j] = temp;
+				modSize = computeForwardSize(g, reverseMap(original));
+
+				if (modSize < originalSize) {
+					// swap back
+					temp = original[i];
+					original[i] = original[j];
+					original[j] = temp;
+				} else {
+					originalSize = computeForwardSize(g, reverseMap(original));
+					optimized = true;
+				}
+			}
+		}
+		return optimized;
+	}
+
+
+	public static boolean optimizedByInsertion(Graph g, int[] localBest) {
+		boolean canImprove = false;
+		for (int i = 0; i < g.numVertices(); i++) {
+			int maxIncrease = 0;
+			int insertIndex = i;
+			int currentIncrease = 0;
+			for (int j = i - 1; j >= 0; j--) {
+				if (g.hasEdge(localBest[i], localBest[j])) {
+					currentIncrease++;
+				}
+				if (g.hasEdge(localBest[j], localBest[i])) {
+					currentIncrease--;
+				}
+				if (currentIncrease > maxIncrease) {
+					maxIncrease = currentIncrease;
+					insertIndex = j;
+				}
+			}
+
+			currentIncrease = 0;
+			for (int j = i + 1; j < g.numVertices(); j++) {
+				if (g.hasEdge(localBest[i], localBest[j])) {
+					currentIncrease--;
+				}
+				if (g.hasEdge(localBest[j], localBest[i])) {
+					currentIncrease++;
+				}
+				if (currentIncrease > maxIncrease) {
+					maxIncrease = currentIncrease;
+					insertIndex = j;
+				}
+			}
+			// Insert if good
+			if (maxIncrease <= 0) {
+				continue;
+			}
+			// Insert
+			int temp = localBest[i];
+			if (insertIndex < i) {
+				for (int k = i - 1; k >= insertIndex; k--) {
+					localBest[k+1] = localBest[k];
+				}
+				localBest[insertIndex] = temp;
+			} else {
+				for (int k = i + 1; k <= insertIndex; k++) {
+					localBest[k-1] = localBest[k];
+				}
+				localBest[insertIndex] = temp;
+			}
+			canImprove = true;
+		}
+		return canImprove;
+	}
+
 	public static int[] doLottaTimes(Graph g, int iterations) {
 		int bestOrderSize = -1;
 		int[] bestOrder = null;
 		for (int it = 0; it < iterations; it++) {
-			Randp r = new Randp(g.numVertices());
+			List<Integer> rand = new ArrayList<Integer>(g.getVertices());
+			Collections.shuffle(rand);
 			int[] indexToVertex = new int[g.numVertices()];
-			int[] vertexToIndex = new int[g.numVertices()];
 			int v;
 			// Generate random ordering
 			for (int j = 0; j < g.numVertices(); j++) {
-				v = r.nextInt();
+				v = rand.get(j);
 				indexToVertex[j] = v;
-				vertexToIndex[v] = j;
 			}
 			// for (int i = 0; i < g.numVertices(); i++) {
 			// 	System.out.print(indexToVertex[i] + " ");
 			// }
 			// System.out.println();
 			int[] localBest = indexToVertex;
-			int forwardSize = computeForwardSize(g, vertexToIndex);
+			// System.out.println(it);
+			int forwardSize = computeForwardSize(g, reverseMap(indexToVertex));
 			int backwardSize = g.numEdges() - forwardSize;
 			if (backwardSize > forwardSize) {
 				// Reverse list localBest
@@ -200,59 +392,12 @@ public class MAS {
 				}
 			}
 
-			// do optimizations here
-			boolean canImprove = true;
-			while (canImprove) {
-				canImprove = false;
-				for (int i = 0; i < g.numVertices(); i++) {
-					int maxIncrease = 0;
-					int insertIndex = i;
-					int currentIncrease = 0;
-					for (int j = i - 1; j >= 0; j--) {
-						if (g.hasEdge(localBest[i], localBest[j])) {
-							currentIncrease++;
-						}
-						if (g.hasEdge(localBest[j], localBest[i])) {
-							currentIncrease--;
-						}
-						if (currentIncrease > maxIncrease) {
-							maxIncrease = currentIncrease;
-							insertIndex = j;
-						}
-					}
+			while (optimizedByInsertion(g, localBest)) {
 
-					currentIncrease = 0;
-					for (int j = i + 1; j < g.numVertices(); j++) {
-						if (g.hasEdge(localBest[i], localBest[j])) {
-							currentIncrease--;
-						}
-						if (g.hasEdge(localBest[j], localBest[i])) {
-							currentIncrease++;
-						}
-						if (currentIncrease > maxIncrease) {
-							maxIncrease = currentIncrease;
-							insertIndex = j;
-						}
-					}
-					// Insert if good
-					if (maxIncrease <= 0) {
-						continue;
-					}
-					// Insert
-					int temp = localBest[i];
-					if (insertIndex < i) {
-						for (int k = i - 1; k >= insertIndex; k--) {
-							localBest[k+1] = localBest[k];
-						}
-						localBest[insertIndex] = temp;
-					} else {
-						for (int k = i + 1; k <= insertIndex; k++) {
-							localBest[k-1] = localBest[k];
-						}
-						localBest[insertIndex] = temp;
-					}
-					canImprove = true;
-				}
+			}
+
+			while(optimizeBySwapTrue(g, localBest)) {
+
 			}
 
 			// We've improved it as much as we can. 
@@ -278,10 +423,10 @@ public class MAS {
 		return bestOrder;
 	}
 
-	public static int[] reverseMap(int[] arr) {
-		int[] reverseMapped = new int[arr.length];
+	public static HashMap<Integer, Integer> reverseMap(int[] arr) {
+		HashMap<Integer, Integer> reverseMapped = new HashMap<Integer, Integer>();
 		for (int i = 0; i < arr.length; i++) {
-			reverseMapped[arr[i]] = i;
+			reverseMapped.put(arr[i], i);
 		}
 		return reverseMapped;
 	}

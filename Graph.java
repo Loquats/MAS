@@ -116,6 +116,8 @@ public class Graph {
 		return clone;
 	}
 
+	// This will runtime ERROR if the graph has been modified!
+	// Not gonna fix it. boo.
 	public void printMatrix() {
 		for (int i = 0; i < size; i++) {
 		    for (int j = 0; j < size; j++) {
