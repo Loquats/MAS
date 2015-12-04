@@ -22,6 +22,13 @@ public class Graph {
 		return children.keySet();
 	}
 
+	public List<Integer> vertList() {
+		List<Integer> arr = new ArrayList<Integer>();
+		for (int i : getVertices())
+			arr.add(i);
+		return arr;
+	}
+
 	public void removeVertex(int vertex) {
 		for (int parent: parents.get(vertex)) {
 			children.get(parent).remove(vertex);

@@ -365,13 +365,14 @@ public class MAS {
 		int bestOrderSize = -1;
 		int[] bestOrder = null;
 		for (int it = 0; it < iterations; it++) {
-			Randp r = new Randp(g.numVertices());
+			List<Integer> rand = g.vertList();
+			Collections.shuffle(rand);
 			int[] indexToVertex = new int[g.numVertices()];
 			int[] vertexToIndex = new int[g.numVertices()];
 			int v;
 			// Generate random ordering
 			for (int j = 0; j < g.numVertices(); j++) {
-				v = r.nextInt();
+				v = rand.get(j);
 				indexToVertex[j] = v;
 				vertexToIndex[v] = j;
 			}
