@@ -17,6 +17,8 @@ public class MAS {
 
 
 	public static void main(String[] args) throws IOException {
+
+
 		String inputFileName = args[0];
 		BufferedReader f = new BufferedReader(new FileReader(inputFileName));
 		int numNodes = Integer.parseInt(f.readLine());
@@ -359,6 +361,66 @@ public class MAS {
 			canImprove = true;
 		}
 		return canImprove;
+	}
+
+	public static int[] findNext(int[] previous) {
+		int k = findK(previous);
+		int l = findL(previous, k);
+		if (k == -1) return null;
+		int temp = previous[k];
+		previous[k] = previous[l];
+		previous[l] = temp;
+		reverse_sublist(previous, k + 1);
+		return previous;
+	}
+
+	public static int findK(int[] list) {
+		int k = -1;
+		for (int i = 0; i < list.length - 1; i++) {
+			if (list[i] < list[i+1]) {
+				k = i;
+			}
+		}
+		return k;
+	}
+
+	public static int findL(int[] list, int k) {
+		int l = -1;
+		for (int i = k; i < list.length; i++) {
+			if (list[k] < list[i]) {
+				l = i;
+			}
+		}
+		return l;
+	}
+
+	public static int[] reverse_sublist(int[] list, int index) {
+		for(int i = index; i < (list.length + index) / 2 ; i++)
+		{
+		    int temp = list[i];
+		    list[i] = list[list.length - i - 1 + index];
+		    list[list.length - i - 1 + index] = temp;
+		}
+		return list;
+	}
+
+	public static int[] bruteForce(Graph g, int nodes) {
+		int max = 0;
+		int[] start = new int[nodes];
+		for (int i = 0; i < nodes; i++) {
+			start[i] = i;
+		}
+		int[] maxList = start.clone();
+		int score = computeForwardSize(g, start);
+		while (start != null)  {
+			score = computeForwardSize(g, start);
+			if (score > max) {
+				max = score;
+				maxList = start.clone();
+			}
+			start = findNext(start);
+		}
+		return maxList;
 	}
 
 	public static int[] doLottaTimes(Graph g, int iterations) {
