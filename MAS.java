@@ -42,10 +42,12 @@ public class MAS {
 		}
 		comp = g;
 
-		g.printMatrix();
-		g.printAdjacency();
-		System.out.println("Original: " + original.numEdges());
-		System.out.println("Double-edge pruned: " + g.numEdges());
+		// g.printMatrix();
+		// g.printAdjacency();
+
+		String shitToPrint = "Original: " + original.numEdges() + "\n" + "Double-edge pruned: " + g.numEdges();
+		// System.out.println("Original: " + original.numEdges());
+		// System.out.println("Double-edge pruned: " + g.numEdges());
 		int doublePrunedEdges = g.numEdges();
 
 
@@ -78,11 +80,11 @@ public class MAS {
 			}
 			sources = newSources;
 		}
-		System.out.print("Sources: ");
-		for (int i = 0; i < sourcePtr; i++) {
-			System.out.print(optimalOrder[i] + " ");
-		}
-		System.out.println();
+		// System.out.print("Sources: ");
+		// for (int i = 0; i < sourcePtr; i++) {
+		// 	System.out.print(optimalOrder[i] + " ");
+		// }
+		// System.out.println();
 
 		// Sinks
 		ArrayList<Integer> sinks = new ArrayList<Integer>();
@@ -108,28 +110,28 @@ public class MAS {
 			}
 			sinks = newSinks;
 		}
-		System.out.print("Sinks: ");
-		for (int i = sinkPtr + 1; i < optimalOrder.length; i++) {
-			System.out.print(optimalOrder[i] + " ");
-		}
-		System.out.println();
+		// System.out.print("Sinks: ");
+		// for (int i = sinkPtr + 1; i < optimalOrder.length; i++) {
+		// 	System.out.print(optimalOrder[i] + " ");
+		// }
+		// System.out.println();
 
 		// g.printAdjacency();
 
 		// Preprocess
 		// write getDisjoint(G) which returns List<Graph>
-		List<Graph> disjointGraphs = getDisjoint(g);
+		// List<Graph> disjointGraphs = getDisjoint(g);
 
 		// for (Graph subgraph: disjointGraphs) {
 		// 	// Process independently
 		// }
 
-		if (g.numVertices() < 11) {
+		// if (g.numVertices() < 11) {
 			// brute force: try all orders of vertices
 			// return early
-		}
+		// }
 
-		int[] bestOrderRand = doLottaTimes(g, 100);
+		int[] bestOrderRand = doLottaTimes(g, Integer.parseInt(args[1]));
 
 		//sorting by outdegree - indegree, removing each time
 		Graph duplicate = g.clone();
@@ -155,9 +157,6 @@ public class MAS {
 		while(optimizeBySwapTrue(g, sortByDegree)) {
 
 		}
-
-		//
-
 
 		// trying to sort by outdegree - indegree
 		int[] sortOptimized = new int[g.numVertices()];
@@ -195,7 +194,6 @@ public class MAS {
 			bestOrder = sortByDegree;
 		}
 
-
 		for (int i = sourcePtr, j = 0; j < bestOrderRand.length; i++, j++) {
 			optimalOrder[i] = bestOrderRand[j];
 		}
@@ -203,6 +201,7 @@ public class MAS {
 		printArray(optimalOrder);
 
 		int graphWeight = computeForwardSize(original, reverseMap(optimalOrder));
+		System.out.println(shitToPrint);
 		System.out.println("Raw: " + graphWeight);
 		System.out.println("Double-edge adjusted: " + (graphWeight - (original.numEdges() - doublePrunedEdges)/2));
 	}
@@ -434,7 +433,8 @@ public class MAS {
 	public static void printArray(int[] arr) {
 		String s = "";
 		for (int i = 0; i < arr.length; i++) {
-			s += arr[i] + " ";
+			// SHADY ALERT
+			s += (arr[i]+1) + " ";
 		}
 		System.out.println(s);
 	}
