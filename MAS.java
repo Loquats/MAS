@@ -7,16 +7,21 @@ public class MAS {
  
 	    @Override
 	    public int compare(Integer v1, Integer v2) {
-	        if(comp.outdegree(v2) - comp.indegree(v2) <= comp.outdegree(v1) - comp.indegree(v1)){
+	    	int compared = comp.outdegree(v2) - comp.indegree(v2) - (comp.outdegree(v1) - comp.indegree(v1));
+	        if(compared < 0){
 	            return 1;
-	        } else {
+	        } else if (compared>0){
 	            return -1;
+	        } else {
+	        	return 0;
 	        }
 	    }
 	}
 
 
 	public static void main(String[] args) throws IOException {
+
+
 		String inputFileName = args[0];
 		BufferedReader f = new BufferedReader(new FileReader(inputFileName));
 		int numNodes = Integer.parseInt(f.readLine());
@@ -118,18 +123,38 @@ public class MAS {
 
 		// Preprocess
 		// write getDisjoint(G) which returns List<Graph>
-		// List<Graph> disjointGraphs = getDisjoint(g);
-
-		// for (Graph subgraph: disjointGraphs) {
-		// 	// Process independently
-		// }
-
-		if (g.numVertices() < 11) {
-			// brute force: try all orders of vertices
-			// return early
+		List<Graph> disjointGraphs = getDisjoint(g);
+		int[] optimalMiddle = new int[g.numVertices()];
+		int i = sourcePtr;
+		for (Graph subgraph: disjointGraphs) {
+			int[] curr = evaluateGraph(subgraph);
+			for (int j : curr) {
+				optimalOrder[i++] = j;
+			}
 		}
 
-		int[] bestOrderRand = doLottaTimes(g, 100);
+		// int[] optimalMiddle = evaluateGraph(g);
+
+
+
+
+		// for (int i = sourcePtr, j = 0; j < optimalMiddle.length; i++, j++) {
+		// 	optimalOrder[i] = optimalMiddle[j];
+		// }
+
+		printArray(optimalOrder);
+
+		int graphWeight = computeForwardSize(original, reverseMap(optimalOrder));
+		System.out.println("Raw: " + graphWeight);
+		System.out.println("Double-edge adjusted: " + (graphWeight - (original.numEdges() - doublePrunedEdges)/2));
+	}
+
+	public static int[] evaluateGraph(Graph g) {
+		if (g.numVertices() < 10) {
+			return bruteForce(g, g.numVertices());
+		}
+
+		int[] bestOrderRand = doLottaTimes(g, 500);
 
 		//sorting by outdegree - indegree, removing each time
 		Graph duplicate = g.clone();
@@ -152,12 +177,6 @@ public class MAS {
 
 		}
 
-		while(optimizeBySwapTrue(g, sortByDegree)) {
-
-		}
-
-		//
-
 
 		// trying to sort by outdegree - indegree
 		int[] sortOptimized = new int[g.numVertices()];
@@ -179,32 +198,18 @@ public class MAS {
 
 		}
 
-		while(optimizeBySwapTrue(g, sortOptimized)) {
-
-		}
-		// end sorting trial
 		int[] bestOrder = bestOrderRand;
 
 		int sortOptVal = computeForwardSize(g, reverseMap(sortOptimized));
 		int sortByDegVal = computeForwardSize(g, reverseMap(sortByDegree));
 		int bestOrderVal = computeForwardSize(g, reverseMap(bestOrderRand));
-
+		// System.out.println(sortOptVal + " : " + sortByDegVal + " : " + bestOrderVal);
 		if (sortOptVal > sortByDegVal && sortOptVal > bestOrderVal) {
 			bestOrder = sortOptimized;
 		} else if (sortByDegVal > sortOptVal && sortByDegVal > bestOrderVal) {
 			bestOrder = sortByDegree;
 		}
-
-
-		for (int i = sourcePtr, j = 0; j < bestOrderRand.length; i++, j++) {
-			optimalOrder[i] = bestOrderRand[j];
-		}
-
-		printArray(optimalOrder);
-
-		int graphWeight = computeForwardSize(original, reverseMap(optimalOrder));
-		System.out.println("Raw: " + graphWeight);
-		System.out.println("Double-edge adjusted: " + (graphWeight - (original.numEdges() - doublePrunedEdges)/2));
+		return bestOrder;
 	}
 
 	// TODO: optimize this
@@ -220,66 +225,34 @@ public class MAS {
 		return size;
 	}
 
+	// public static boolean optimizeBySwapTrue(Graph g, int[] original) {
+		// int originalSize, modSize, temp;
+		// boolean optimized = false;
+		// originalSize = computeForwardSize(g, reverseMap(original));
+		// int[] best = original.clone();
+		// for (int i = 0; i < original.length - 1; i++) {
+		// 	for (int j = i+1; j<original.length; j++) {
+		// 		// swap
+		// 		temp = original[i];
+		// 		original[i] = original[j];
+		// 		original[j] = temp;
+		// 		modSize = computeForwardSize(g, reverseMap(original));
 
-	// returns optimal swapped ordering
-	// public static int[] greedyOptimizeBySwap(Graph g, int[] original) {
-	// 	int originalSize = computeForwardSize(g, reverseMap(g, original));
-	// 	int modSize, temp;
-
-	// 	int[] modified = original.clone();
-	// 	int[] best = original.clone();
-
-	// 	for (int i = 0; i < original.length - 1; i++) {
-	// 		for (int j = i+1; j<original.length; j++) {
-	// 			// swap
-	// 			temp = modified[i];
-	// 			modified[i] = modified[j];
-	// 			modified[j] = temp;
-
-	// 			// check
-	// 			modSize = computeForwardSize(g, reverseMap(modified));
-	// 			if (modSize > originalSize) {
-	// 				temp = best[i];
-	// 				best[i] = best[j];
-	// 				best[j] = temp;
-	// 			} else {
-	// 				// swap back
-	// 				temp = modified[i];
-	// 				modified[i] = modified[j];
-	// 				modified[j] = temp;
-	// 			}				
-	// 		}
-	// 	}
-	// 	return best;
-	// }
-
-	public static boolean optimizeBySwapTrue(Graph g, int[] original) {
-		int originalSize, modSize, temp;
-		boolean optimized = false;
-		originalSize = computeForwardSize(g, reverseMap(original));
-		int[] best = original.clone();
-		for (int i = 0; i < original.length - 1; i++) {
-			for (int j = i+1; j<original.length; j++) {
-				// swap
-				temp = original[i];
-				original[i] = original[j];
-				original[j] = temp;
-				modSize = computeForwardSize(g, reverseMap(original));
-
-				if (modSize > originalSize) {
-					best = original.clone();
-					optimized = true;
-				}
+		// 		if (modSize > originalSize) {
+		// 			best = original.clone();
+		// 			optimized = true;
+		// 			System.out.println("swapped");
+		// 		}
 				
-				// always swap best
-				temp = original[i];
-				original[i] = original[j];
-				original[j] = temp;
-			}
-		}
-		original = best;
-		return optimized;
-	}
+		// 		// always swap best
+		// 		temp = original[i];
+		// 		original[i] = original[j];
+		// 		original[j] = temp;
+		// 	}
+		// }
+		// original = best;
+		// return optimized;
+	// }
 
 	public static boolean optimizeBySwapGreedy(Graph g, int[] original) {
 		int originalSize, modSize, temp;
@@ -362,6 +335,66 @@ public class MAS {
 		return canImprove;
 	}
 
+	public static int[] findNext(int[] previous) {
+		int k = findK(previous);
+		int l = findL(previous, k);
+		if (k == -1) return null;
+		int temp = previous[k];
+		previous[k] = previous[l];
+		previous[l] = temp;
+		reverse_sublist(previous, k + 1);
+		return previous;
+	}
+
+	public static int findK(int[] list) {
+		int k = -1;
+		for (int i = 0; i < list.length - 1; i++) {
+			if (list[i] < list[i+1]) {
+				k = i;
+			}
+		}
+		return k;
+	}
+
+	public static int findL(int[] list, int k) {
+		int l = -1;
+		for (int i = k; i < list.length; i++) {
+			if (list[k] < list[i]) {
+				l = i;
+			}
+		}
+		return l;
+	}
+
+	public static int[] reverse_sublist(int[] list, int index) {
+		for(int i = index; i < (list.length + index) / 2 ; i++)
+		{
+		    int temp = list[i];
+		    list[i] = list[list.length - i - 1 + index];
+		    list[list.length - i - 1 + index] = temp;
+		}
+		return list;
+	}
+
+	public static int[] bruteForce(Graph g, int nodes) {
+		int max = 0;
+		int[] start = new int[nodes];
+		for (int i = 0; i < nodes; i++) {
+			start[i] = i;
+		}
+		int[] maxList = start.clone();
+		int score = computeForwardSize(g,reverseMap(start));
+		while (start != null)  {
+			score = computeForwardSize(g,reverseMap(start));
+			if (score > max) {
+				max = score;
+				maxList = start.clone();
+			}
+			start = findNext(start);
+		}
+		return maxList;
+	}
+
 	public static int[] doLottaTimes(Graph g, int iterations) {
 		int bestOrderSize = -1;
 		int[] bestOrder = null;
@@ -396,9 +429,11 @@ public class MAS {
 
 			}
 
-			while(optimizeBySwapTrue(g, localBest)) {
 
-			}
+
+
+
+
 
 			// We've improved it as much as we can. 
 			// Check if we should update bestOrder
@@ -443,35 +478,33 @@ public class MAS {
 		LinkedList<HashSet<Integer>> setsOfDG = new LinkedList<HashSet<Integer>>();
 		for (Integer vertex: g.getVertices()) {
 			Set<Integer> endEdges = g.getChildren(vertex);
-			boolean exit = false;
+			LinkedList<HashSet<Integer>> commonDGs = new LinkedList<HashSet<Integer>>();
 			
 			// Check for source vertex in disjoint sets
 			for (HashSet<Integer> disjointSet: setsOfDG) {
 				if (disjointSet.contains(vertex)) {
-					disjointSet.addAll(endEdges);
-					exit = true;
+					setsOfDG.remove(disjointSet);
+					commonDGs.add(disjointSet);
 				}
 			}
-			if (exit) continue;
 
 			// Check for child vertex in disjoint setes
 			for (Integer child: endEdges) {
 				for (HashSet<Integer> disjointSet: setsOfDG) {
 					if (disjointSet.contains(child)) {
-						disjointSet.addAll(endEdges);
-						disjointSet.add(vertex);
-						exit = true;
-						break;
+						setsOfDG.remove(disjointSet);
+						commonDGs.add(disjointSet);
 					}
 				}
-				if (exit) break;
 			}
-			if (exit) continue;
 			
 			// Create new disjoint set
 			HashSet<Integer> set = new HashSet<Integer>();
 			set.add(vertex);
 			set.addAll(endEdges);
+			for (HashSet<Integer> commonSet: commonDGs) {
+				set.addAll(commonSet);
+			}
 			setsOfDG.add(set);
 		}
 
