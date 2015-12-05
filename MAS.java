@@ -127,14 +127,32 @@ public class MAS {
 
 		// for (Graph subgraph: disjointGraphs) {
 		// 	// Process independently
+
 		// }
 
+		int[] optimalMiddle = evaluateGraph(g);
+
+
+
+
+		for (int i = sourcePtr, j = 0; j < optimalMiddle.length; i++, j++) {
+			optimalOrder[i] = optimalMiddle[j];
+		}
+
+		printArray(optimalOrder);
+
+		int graphWeight = computeForwardSize(original, reverseMap(optimalOrder));
+		System.out.println("Raw: " + graphWeight);
+		System.out.println("Double-edge adjusted: " + (graphWeight - (original.numEdges() - doublePrunedEdges)/2));
+	}
+
+	public static int[] evaluateGraph(Graph g) {
 		if (g.numVertices() < 11) {
 			// brute force: try all orders of vertices
 			// return early
 		}
 
-		int[] bestOrderRand = doLottaTimes(g, 100);
+		int[] bestOrderRand = doLottaTimes(g, 500);
 
 		//sorting by outdegree - indegree, removing each time
 		Graph duplicate = g.clone();
@@ -157,12 +175,6 @@ public class MAS {
 
 		}
 
-		while(optimizeBySwapTrue(g, sortByDegree)) {
-
-		}
-
-		//
-
 
 		// trying to sort by outdegree - indegree
 		int[] sortOptimized = new int[g.numVertices()];
@@ -184,32 +196,18 @@ public class MAS {
 
 		}
 
-		while(optimizeBySwapTrue(g, sortOptimized)) {
-
-		}
-		// end sorting trial
 		int[] bestOrder = bestOrderRand;
 
 		int sortOptVal = computeForwardSize(g, reverseMap(sortOptimized));
 		int sortByDegVal = computeForwardSize(g, reverseMap(sortByDegree));
 		int bestOrderVal = computeForwardSize(g, reverseMap(bestOrderRand));
-
+		// System.out.println(sortOptVal + " : " + sortByDegVal + " : " + bestOrderVal);
 		if (sortOptVal > sortByDegVal && sortOptVal > bestOrderVal) {
 			bestOrder = sortOptimized;
 		} else if (sortByDegVal > sortOptVal && sortByDegVal > bestOrderVal) {
 			bestOrder = sortByDegree;
 		}
-
-
-		for (int i = sourcePtr, j = 0; j < bestOrderRand.length; i++, j++) {
-			optimalOrder[i] = bestOrderRand[j];
-		}
-
-		printArray(optimalOrder);
-
-		int graphWeight = computeForwardSize(original, reverseMap(optimalOrder));
-		System.out.println("Raw: " + graphWeight);
-		System.out.println("Double-edge adjusted: " + (graphWeight - (original.numEdges() - doublePrunedEdges)/2));
+		return bestOrder;
 	}
 
 	// TODO: optimize this
@@ -225,66 +223,34 @@ public class MAS {
 		return size;
 	}
 
+	// public static boolean optimizeBySwapTrue(Graph g, int[] original) {
+		// int originalSize, modSize, temp;
+		// boolean optimized = false;
+		// originalSize = computeForwardSize(g, reverseMap(original));
+		// int[] best = original.clone();
+		// for (int i = 0; i < original.length - 1; i++) {
+		// 	for (int j = i+1; j<original.length; j++) {
+		// 		// swap
+		// 		temp = original[i];
+		// 		original[i] = original[j];
+		// 		original[j] = temp;
+		// 		modSize = computeForwardSize(g, reverseMap(original));
 
-	// returns optimal swapped ordering
-	// public static int[] greedyOptimizeBySwap(Graph g, int[] original) {
-	// 	int originalSize = computeForwardSize(g, reverseMap(g, original));
-	// 	int modSize, temp;
-
-	// 	int[] modified = original.clone();
-	// 	int[] best = original.clone();
-
-	// 	for (int i = 0; i < original.length - 1; i++) {
-	// 		for (int j = i+1; j<original.length; j++) {
-	// 			// swap
-	// 			temp = modified[i];
-	// 			modified[i] = modified[j];
-	// 			modified[j] = temp;
-
-	// 			// check
-	// 			modSize = computeForwardSize(g, reverseMap(modified));
-	// 			if (modSize > originalSize) {
-	// 				temp = best[i];
-	// 				best[i] = best[j];
-	// 				best[j] = temp;
-	// 			} else {
-	// 				// swap back
-	// 				temp = modified[i];
-	// 				modified[i] = modified[j];
-	// 				modified[j] = temp;
-	// 			}				
-	// 		}
-	// 	}
-	// 	return best;
-	// }
-
-	public static boolean optimizeBySwapTrue(Graph g, int[] original) {
-		int originalSize, modSize, temp;
-		boolean optimized = false;
-		originalSize = computeForwardSize(g, reverseMap(original));
-		int[] best = original.clone();
-		for (int i = 0; i < original.length - 1; i++) {
-			for (int j = i+1; j<original.length; j++) {
-				// swap
-				temp = original[i];
-				original[i] = original[j];
-				original[j] = temp;
-				modSize = computeForwardSize(g, reverseMap(original));
-
-				if (modSize > originalSize) {
-					best = original.clone();
-					optimized = true;
-				}
+		// 		if (modSize > originalSize) {
+		// 			best = original.clone();
+		// 			optimized = true;
+		// 			System.out.println("swapped");
+		// 		}
 				
-				// always swap best
-				temp = original[i];
-				original[i] = original[j];
-				original[j] = temp;
-			}
-		}
-		original = best;
-		return optimized;
-	}
+		// 		// always swap best
+		// 		temp = original[i];
+		// 		original[i] = original[j];
+		// 		original[j] = temp;
+		// 	}
+		// }
+		// original = best;
+		// return optimized;
+	// }
 
 	public static boolean optimizeBySwapGreedy(Graph g, int[] original) {
 		int originalSize, modSize, temp;
@@ -461,9 +427,11 @@ public class MAS {
 
 			}
 
-			while(optimizeBySwapTrue(g, localBest)) {
 
-			}
+
+
+
+
 
 			// We've improved it as much as we can. 
 			// Check if we should update bestOrder
