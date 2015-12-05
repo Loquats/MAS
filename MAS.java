@@ -123,21 +123,24 @@ public class MAS {
 
 		// Preprocess
 		// write getDisjoint(G) which returns List<Graph>
-		// List<Graph> disjointGraphs = getDisjoint(g);
-
-		// for (Graph subgraph: disjointGraphs) {
-		// 	// Process independently
-
-		// }
-
-		int[] optimalMiddle = evaluateGraph(g);
-
-
-
-
-		for (int i = sourcePtr, j = 0; j < optimalMiddle.length; i++, j++) {
-			optimalOrder[i] = optimalMiddle[j];
+		List<Graph> disjointGraphs = getDisjoint(g);
+		int[] optimalMiddle = new int[g.numVertices()];
+		int i = sourcePtr;
+		for (Graph subgraph: disjointGraphs) {
+			int[] curr = evaluateGraph(subgraph);
+			for (int j : curr) {
+				optimalOrder[i++] = j;
+			}
 		}
+
+		// int[] optimalMiddle = evaluateGraph(g);
+
+
+
+
+		// for (int i = sourcePtr, j = 0; j < optimalMiddle.length; i++, j++) {
+		// 	optimalOrder[i] = optimalMiddle[j];
+		// }
 
 		printArray(optimalOrder);
 
@@ -147,9 +150,8 @@ public class MAS {
 	}
 
 	public static int[] evaluateGraph(Graph g) {
-		if (g.numVertices() < 11) {
-			// brute force: try all orders of vertices
-			// return early
+		if (g.numVertices() < 10) {
+			return bruteForce(g, g.numVertices());
 		}
 
 		int[] bestOrderRand = doLottaTimes(g, 500);
@@ -476,35 +478,33 @@ public class MAS {
 		LinkedList<HashSet<Integer>> setsOfDG = new LinkedList<HashSet<Integer>>();
 		for (Integer vertex: g.getVertices()) {
 			Set<Integer> endEdges = g.getChildren(vertex);
-			boolean exit = false;
+			LinkedList<HashSet<Integer>> commonDGs = new LinkedList<HashSet<Integer>>();
 			
 			// Check for source vertex in disjoint sets
 			for (HashSet<Integer> disjointSet: setsOfDG) {
 				if (disjointSet.contains(vertex)) {
-					disjointSet.addAll(endEdges);
-					exit = true;
+					setsOfDG.remove(disjointSet);
+					commonDGs.add(disjointSet);
 				}
 			}
-			if (exit) continue;
 
 			// Check for child vertex in disjoint setes
 			for (Integer child: endEdges) {
 				for (HashSet<Integer> disjointSet: setsOfDG) {
 					if (disjointSet.contains(child)) {
-						disjointSet.addAll(endEdges);
-						disjointSet.add(vertex);
-						exit = true;
-						break;
+						setsOfDG.remove(disjointSet);
+						commonDGs.add(disjointSet);
 					}
 				}
-				if (exit) break;
 			}
-			if (exit) continue;
 			
 			// Create new disjoint set
 			HashSet<Integer> set = new HashSet<Integer>();
 			set.add(vertex);
 			set.addAll(endEdges);
+			for (HashSet<Integer> commonSet: commonDGs) {
+				set.addAll(commonSet);
+			}
 			setsOfDG.add(set);
 		}
 
