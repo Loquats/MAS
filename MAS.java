@@ -24,7 +24,7 @@ public class MAS {
 
 		String inputFileName = args[0];
 		BufferedReader f = new BufferedReader(new FileReader(inputFileName));
-		int numNodes = Integer.parseInt(f.readLine());
+		int numNodes = Integer.parseInt(f.readLine().split(" ")[0]);
 		Graph g = new Graph(numNodes);
 		Graph original = new Graph(numNodes);
 
@@ -47,10 +47,10 @@ public class MAS {
 		}
 		comp = g;
 
-		g.printMatrix();
-		g.printAdjacency();
-		System.out.println("Original: " + original.numEdges());
-		System.out.println("Double-edge pruned: " + g.numEdges());
+		// g.printMatrix();
+		// g.printAdjacency();
+		// System.out.println("Original: " + original.numEdges());
+		// System.out.println("Double-edge pruned: " + g.numEdges());
 		int doublePrunedEdges = g.numEdges();
 
 
@@ -83,11 +83,11 @@ public class MAS {
 			}
 			sources = newSources;
 		}
-		System.out.print("Sources: ");
-		for (int i = 0; i < sourcePtr; i++) {
-			System.out.print(optimalOrder[i] + " ");
-		}
-		System.out.println();
+		// System.out.print("Sources: ");
+		// for (int i = 0; i < sourcePtr; i++) {
+		// 	System.out.print(optimalOrder[i] + " ");
+		// }
+		// System.out.println();
 
 		// Sinks
 		ArrayList<Integer> sinks = new ArrayList<Integer>();
@@ -113,11 +113,11 @@ public class MAS {
 			}
 			sinks = newSinks;
 		}
-		System.out.print("Sinks: ");
-		for (int i = sinkPtr + 1; i < optimalOrder.length; i++) {
-			System.out.print(optimalOrder[i] + " ");
-		}
-		System.out.println();
+		// System.out.print("Sinks: ");
+		// for (int i = sinkPtr + 1; i < optimalOrder.length; i++) {
+		// 	System.out.print(optimalOrder[i] + " ");
+		// }
+		// System.out.println();
 
 		// g.printAdjacency();
 
@@ -128,7 +128,7 @@ public class MAS {
 		// int[] optimalMiddle = new int[g.numVertices()];
 		int i = sourcePtr;
 		for (Graph subgraph: disjointGraphs) {
-			System.out.println("" + subgraph.getVertices());
+			// System.out.println("" + subgraph.getVertices());
 
 			int[] curr = evaluateGraph(subgraph);
 			for (int j : curr) {
@@ -148,8 +148,8 @@ public class MAS {
 		printArray(optimalOrder);
 
 		int graphWeight = computeForwardSize(original, reverseMap(optimalOrder));
-		System.out.println("Raw: " + graphWeight);
-		System.out.println("Double-edge adjusted: " + (graphWeight - (original.numEdges() - doublePrunedEdges)/2));
+		// System.out.println("Raw: " + graphWeight);
+		// System.out.println("Double-edge adjusted: " + (graphWeight - (original.numEdges() - doublePrunedEdges)/2));
 	}
 
 	public static int[] evaluateGraph(Graph g) {
@@ -161,7 +161,7 @@ public class MAS {
 			return bruteForce(g, vertices);
 		}
 
-		int[] bestOrderRand = doLottaTimes(g, 500);
+		int[] bestOrderRand = doLottaTimes(g, 2500);
 
 		//sorting by outdegree - indegree, removing each time
 		Graph duplicate = g.clone();
@@ -482,7 +482,7 @@ public class MAS {
 			backwardSize = g.numEdges() - forwardSize;
 
 			if (backwardSize > forwardSize) {
-				System.out.println("You really fucked up.");
+				// System.out.println("You really fucked up.");
 				return null;
 			}
 
@@ -522,21 +522,35 @@ public class MAS {
 			LinkedList<HashSet<Integer>> commonDGs = new LinkedList<HashSet<Integer>>();
 			
 			// Check for source vertex in disjoint sets
+			HashSet<HashSet<Integer>> transfer = new HashSet<HashSet<Integer>>();
 			for (HashSet<Integer> disjointSet: setsOfDG) {
 				if (disjointSet.contains(vertex)) {
-					setsOfDG.remove(disjointSet);
-					commonDGs.add(disjointSet);
+					transfer.add(disjointSet);
+					// setsOfDG.remove(disjointSet);
+					// commonDGs.add(disjointSet);
 				}
 			}
 
-			// Check for child vertex in disjoint setes
+			for (HashSet<Integer> set: transfer) {
+				setsOfDG.remove(set);
+				commonDGs.add(set);
+			}
+
+			// Check for child vertex in disjoint sets
+			transfer = new HashSet<HashSet<Integer>>();
 			for (Integer child: endEdges) {
 				for (HashSet<Integer> disjointSet: setsOfDG) {
 					if (disjointSet.contains(child)) {
-						setsOfDG.remove(disjointSet);
-						commonDGs.add(disjointSet);
+						transfer.add(disjointSet);
+						// setsOfDG.remove(disjointSet);
+						// commonDGs.add(disjointSet);
 					}
 				}
+			}
+
+			for (HashSet<Integer> set: transfer) {
+				setsOfDG.remove(set);
+				commonDGs.add(set);
 			}
 			
 			// Create new disjoint set
