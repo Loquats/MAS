@@ -421,6 +421,8 @@ public class MAS {
 		int[] maxList = start.clone();
 		int score;
 		while (start != null)  {
+			printArray(start);
+			System.out.println(reverseMap(start).toString());
 			score = computeForwardSize(g,reverseMap(start));
 			if (score > max) {
 				max = score;
