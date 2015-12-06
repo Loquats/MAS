@@ -337,8 +337,8 @@ public class MAS {
 
 	public static int[] findNext(int[] previous) {
 		int k = findK(previous);
-		int l = findL(previous, k);
 		if (k == -1) return null;
+		int l = findL(previous, k);
 		int temp = previous[k];
 		previous[k] = previous[l];
 		previous[l] = temp;
