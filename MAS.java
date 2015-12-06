@@ -153,9 +153,9 @@ public class MAS {
 	}
 
 	public static int[] evaluateGraph(Graph g) {
-		if (g.numVertices() < 10) {
-			return bruteForce(g, g.numVertices());
-		}
+		// if (g.numVertices() < 10) {
+		// 	return bruteForce(g, g.numVertices());
+		// }
 
 		int[] bestOrderRand = doLottaTimes(g, 500);
 
@@ -379,12 +379,41 @@ public class MAS {
 		return list;
 	}
 
-	public static int[] bruteForce(Graph g, int nodes) {
+	public static HashMap<Integer, Integer> map(int[] map) {
+		HashMap<Integer, Integer> m = new HashMap<Integer,Integer>();
+		for (int i = 0; i < map.length; i ++) {
+			m.put(map[i], i);
+		}
+		return m;
+	}
+
+	public static HashMap<Integer, Integer> inverseMap(int[] map) {
+		HashMap<Integer, Integer> m = new HashMap<Integer,Integer>();
+		for (int i = 0; i < map.length; i ++) {
+			m.put(i, map[i]);
+		}
+		return m;
+	}
+
+	public static int[] getBackwards(int[] l, HashMap<Integer, Integer> key) {
+		int[] ret = new int[l.length];
+		for (int i = 0; i < ret.length; i++) {
+			ret[i] = key.get(l[i]);
+		}
+		return ret;
+	}
+
+	public static int[] bruteForce(Graph g, int[] vertices) {
 		int max = 0;
-		int[] start = new int[nodes];
-		for (int i = 0; i < nodes; i++) {
+		int[] start = new int[vertices.length];
+		for (int i = 0; i < vertices.length; i++) {
 			start[i] = i;
 		}
+
+		HashMap<Integer, Integer> forwards = map(vertices);
+		HashMap<Integer, Integer> backwards = inverseMap(vertices);
+
+
 		int[] maxList = start.clone();
 		int score = computeForwardSize(g,reverseMap(start));
 		while (start != null)  {
@@ -398,7 +427,7 @@ public class MAS {
 				break;
 			}
 		}
-		return maxList;
+		return getBackwards(maxList, backwards);
 	}
 
 	public static int[] doLottaTimes(Graph g, int iterations) {
