@@ -420,10 +420,10 @@ public class MAS {
 
 		int[] maxList = start.clone();
 		int score;
+		int[] backwardsStart;
 		while (start != null)  {
-			printArray(start);
-			System.out.println(reverseMap(start).toString());
-			score = computeForwardSize(g,reverseMap(start));
+			backwardsStart = getBackwards(start, backwards);
+			score = computeForwardSize(g,reverseMap(backwardsStart));
 			if (score > max) {
 				max = score;
 				maxList = start.clone();
