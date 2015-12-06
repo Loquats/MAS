@@ -124,9 +124,12 @@ public class MAS {
 		// Preprocess
 		// write getDisjoint(G) which returns List<Graph>
 		List<Graph> disjointGraphs = getDisjoint(g);
-		int[] optimalMiddle = new int[g.numVertices()];
+		// System.out.println(disjointGraphs.size());
+		// int[] optimalMiddle = new int[g.numVertices()];
 		int i = sourcePtr;
 		for (Graph subgraph: disjointGraphs) {
+			System.out.println("" + subgraph.getVertices());
+
 			int[] curr = evaluateGraph(subgraph);
 			for (int j : curr) {
 				optimalOrder[i++] = j;
@@ -337,8 +340,8 @@ public class MAS {
 
 	public static int[] findNext(int[] previous) {
 		int k = findK(previous);
-		int l = findL(previous, k);
 		if (k == -1) return null;
+		int l = findL(previous, k);
 		int temp = previous[k];
 		previous[k] = previous[l];
 		previous[l] = temp;
@@ -391,6 +394,9 @@ public class MAS {
 				maxList = start.clone();
 			}
 			start = findNext(start);
+			if (score == g.numEdges()) {
+				break;
+			}
 		}
 		return maxList;
 	}
